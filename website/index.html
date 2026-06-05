@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MistikAI – Okült Okuma & Tarot & Numeroloji</title>
+  <meta name="description" content="AI ile kişiselleştirilmiş tarot, numeroloji ve astroloji okumaları. Avuç izi ve yüz analizinizle geleceğinizi keşfedin." />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      background: #0A0014;
+      color: #E8E0FF;
+      min-height: 100vh;
+    }
+    .stars {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(ellipse at center, #1A0035 0%, #0A0014 70%);
+      z-index: 0;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 24px 20px;
+    }
+    .hero {
+      text-align: center;
+      padding: 60px 0 40px;
+    }
+    .hero-emoji { font-size: 80px; display: block; margin-bottom: 20px; }
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 900;
+      color: #C9A84C;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+    .hero .tagline {
+      font-size: 18px;
+      color: #9B8EC4;
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .badge {
+      display: inline-block;
+      background: rgba(123, 47, 190, 0.3);
+      border: 1px solid #7B2FBE;
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 13px;
+      color: #E8E0FF;
+      margin-bottom: 32px;
+    }
+    .download-section {
+      background: linear-gradient(135deg, #1A0035, #0A0014);
+      border: 1px solid #2D1A55;
+      border-radius: 24px;
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .download-section h2 {
+      color: #C9A84C;
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    .download-section p {
+      color: #9B8EC4;
+      font-size: 14px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+    .btn-ios {
+      display: block;
+      background: linear-gradient(135deg, #C9A84C, #A07830);
+      color: #0A0014;
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: 800;
+      padding: 18px 32px;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .btn-ios:hover { transform: scale(1.02); opacity: 0.95; }
+    .btn-android {
+      display: block;
+      background: linear-gradient(135deg, #7B2FBE, #4A0080);
+      color: #E8E0FF;
+      text-decoration: none;
+      font-size: 17px;
+      font-weight: 800;
+      padding: 18px 32px;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .btn-android:hover { transform: scale(1.02); opacity: 0.95; }
+    .btn-testflight {
+      display: block;
+      background: transparent;
+      border: 1px solid #2D1A55;
+      color: #9B8EC4;
+      text-decoration: none;
+      font-size: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      transition: border-color 0.2s;
+    }
+    .btn-testflight:hover { border-color: #C9A84C; color: #C9A84C; }
+    .install-note {
+      font-size: 11px;
+      color: #5C4E7A;
+      margin-top: 12px;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .feature-card {
+      background: linear-gradient(135deg, #1A0035, #0A0014);
+      border: 1px solid #2D1A55;
+      border-radius: 16px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .feature-emoji { font-size: 32px; display: block; margin-bottom: 8px; }
+    .feature-title { color: #C9A84C; font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .feature-desc { color: #9B8EC4; font-size: 12px; line-height: 1.5; }
+    .pricing {
+      background: linear-gradient(135deg, #1A0035, #0A0014);
+      border: 1px solid #C9A84C;
+      border-radius: 24px;
+      padding: 28px 24px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .pricing h3 { color: #C9A84C; font-size: 20px; margin-bottom: 20px; }
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #2D1A55;
+    }
+    .price-row:last-child { border-bottom: none; }
+    .price-name { color: #E8E0FF; font-size: 15px; }
+    .price-val { color: #C9A84C; font-size: 18px; font-weight: 800; }
+    .popular-tag {
+      background: #C9A84C;
+      color: #0A0014;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 8px;
+    }
+    .testimonials { margin-bottom: 32px; }
+    .testimonials h3 { color: #C9A84C; font-size: 18px; margin-bottom: 16px; text-align: center; }
+    .testimonial-card {
+      background: linear-gradient(135deg, #1A0035, #0A0014);
+      border: 1px solid #2D1A55;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .testimonial-text { color: #E8E0FF; font-size: 14px; line-height: 1.6; font-style: italic; margin-bottom: 8px; }
+    .testimonial-name { color: #9B8EC4; font-size: 12px; }
+    .footer {
+      text-align: center;
+      color: #5C4E7A;
+      font-size: 11px;
+      padding: 32px 0;
+      line-height: 1.8;
+    }
+    .footer a { color: #7B2FBE; text-decoration: none; }
+    @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="container">
+    <div class="hero">
+      <span class="hero-emoji">🔮</span>
+      <h1>MistikAI</h1>
+      <p class="tagline">
+        Tarot · Numeroloji · Astroloji · Avuç Okuma<br/>
+        Yapay zeka ile kişiselleştirilmiş gelecek okumaları
+      </p>
+      <span class="badge">✨ Türkiye'nin 1 No'lu Okült Uygulaması</span>
+    </div>
+
+    <div class="download-section">
+      <h2>📱 Hemen İndir</h2>
+      <p>iOS ve Android'de ücretsiz başla. İlk sorun bizden!</p>
+
+      <a class="btn-ios" href="itms-services://?action=download-manifest&url=https://mistikai.com/install.plist">
+        🍎 iPhone'a Yükle (Direct Install)
+      </a>
+      <a class="btn-android" href="https://play.google.com/store/apps/details?id=com.mistikai.app">
+        🤖 Android'e İndir
+      </a>
+      <a class="btn-testflight" href="https://testflight.apple.com/join/mistikai">
+        TestFlight ile Beta'yı Dene
+      </a>
+      <p class="install-note">
+        Direct install için iOS 16+ ve güvenilir kaynağa izin vermeniz gerekebilir.
+        Ayarlar → Genel → VPN ve Cihaz Yönetimi
+      </p>
+    </div>
+
+    <div class="features">
+      <div class="feature-card">
+        <span class="feature-emoji">🃏</span>
+        <div class="feature-title">Tarot Okuma</div>
+        <div class="feature-desc">78 kartlı tam Rider-Waite destesiyle kişisel okumalar</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-emoji">⭐</span>
+        <div class="feature-title">Astroloji</div>
+        <div class="feature-desc">Güneş, Ay, Yükselen burç ve günlük transit analizi</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-emoji">🔢</span>
+        <div class="feature-title">Numeroloji</div>
+        <div class="feature-desc">Pythagoras numerolojisi ile tam yaşam haritanız</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-emoji">✋</span>
+        <div class="feature-title">Avuç Okuma</div>
+        <div class="feature-desc">AI ile kader, kalp ve kafa çizgisi analizi</div>
+      </div>
+    </div>
+
+    <div class="pricing">
+      <h3>💰 Fiyatlar</h3>
+      <div class="price-row">
+        <span class="price-name">Başlangıç – 3 Soru</span>
+        <span class="price-val">₺49</span>
+      </div>
+      <div class="price-row">
+        <span class="price-name">
+          Aylık Premium
+          <span class="popular-tag">POPÜLER</span>
+        </span>
+        <span class="price-val">₺149/ay</span>
+      </div>
+      <div class="price-row">
+        <span class="price-name">Yıllık Premium</span>
+        <span class="price-val">₺799/yıl</span>
+      </div>
+      <div class="price-row">
+        <span class="price-name">Özel Okuma (PDF)</span>
+        <span class="price-val">₺299</span>
+      </div>
+    </div>
+
+    <div class="testimonials">
+      <h3>💬 Kullanıcılar Ne Diyor?</h3>
+      <div class="testimonial-card">
+        <div class="testimonial-text">
+          "Kariyer sorunum için aldığım okuma inanılmazdı. 3 ay içinde tam istediğim terfiyi aldım!" ⭐⭐⭐⭐⭐
+        </div>
+        <div class="testimonial-name">— Ayşe K., İstanbul</div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-text">
+          "Avuç izi okumam çok doğru çıktı. Kader çizgim gerçekten de orta yaşta güçlenecekmiş!" ⭐⭐⭐⭐⭐
+        </div>
+        <div class="testimonial-name">— Fatma M., Ankara</div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-text">
+          "Numeroloji analizim hayatımı değiştirdi. Yaşam yolu sayım her şeyi açıkladı." ⭐⭐⭐⭐⭐
+        </div>
+        <div class="testimonial-name">— Mehmet Y., İzmir</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>© 2025 MistikAI. Tüm hakları saklıdır.</p>
+      <p>
+        <a href="#">Gizlilik Politikası</a> ·
+        <a href="#">Kullanım Koşulları</a> ·
+        <a href="mailto:destek@mistikai.com">Destek</a>
+      </p>
+      <p style="margin-top: 12px; font-size: 10px;">
+        Uygulama eğlence amaçlıdır. Okumaların gerçeği yansıttığı iddia edilmez.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
