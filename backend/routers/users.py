@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import date
@@ -6,6 +7,9 @@ from models.database import get_db, User
 from models.schemas import UserCreate, UserResponse
 from services.numerology_engine import calculate_all
 from services.astrology_engine import calculate_natal_chart
+
+TEST_MODE = os.getenv("TEST_MODE", "true").lower() == "true"
+FREE_QUESTIONS_ON_SIGNUP = 999 if TEST_MODE else 1
 
 router = APIRouter()
 
@@ -28,7 +32,7 @@ def create_or_update_user(user_data: UserCreate, db: Session = Depends(get_db)):
             birth_time=user_data.birth_time,
             birth_city=user_data.birth_city,
             push_token=user_data.push_token,
-            questions_remaining=1,
+            questions_remaining=FREE_QUESTIONS_ON_SIGNUP,
         )
         db.add(user)
     db.commit()
