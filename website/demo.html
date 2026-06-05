@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="MistikAI"/>
+<title>MistikAI – Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0A0014;--bg2:#120025;--card:#1A0035;
+  --gold:#C9A84C;--gold2:#E2C97E;
+  --purple:#7B2FBE;--purple2:#9B4FDE;
+  --text:#E8E0FF;--muted:#9B8EC4;--dim:#5C4E7A;
+  --border:#2D1A55;--err:#E55353;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,'Segoe UI',sans-serif;overflow:hidden;}
+canvas{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
+
+/* SCREENS */
+.screen{position:fixed;inset:0;z-index:1;display:none;flex-direction:column;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.screen.active{display:flex;}
+
+/* SPLASH */
+#splash{align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1A0035 0%,#0A0014 80%);}
+.splash-logo{font-size:90px;animation:pulse 2s infinite;}
+.splash-title{font-size:42px;font-weight:900;color:var(--gold);margin:16px 0 8px;letter-spacing:-1px;}
+.splash-sub{color:var(--muted);font-size:16px;text-align:center;line-height:1.6;padding:0 32px;}
+.splash-btn{margin-top:48px;background:linear-gradient(135deg,var(--gold),#A07830);color:#0A0014;border:none;border-radius:16px;padding:18px 48px;font-size:17px;font-weight:800;cursor:pointer;width:80%;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+
+/* ONBOARDING */
+#onboard{padding:0 24px;padding-top:env(safe-area-inset-top,20px);}
+.ob-step{display:none;flex-direction:column;min-height:100vh;padding-top:60px;}
+.ob-step.active{display:flex;}
+.ob-emoji{font-size:64px;text-align:center;margin-bottom:20px;}
+.ob-title{font-size:26px;font-weight:800;color:var(--gold);text-align:center;margin-bottom:8px;}
+.ob-sub{color:var(--muted);text-align:center;font-size:15px;line-height:1.6;margin-bottom:32px;}
+.ob-input{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;color:var(--text);font-size:16px;width:100%;outline:none;-webkit-appearance:none;}
+.ob-input::placeholder{color:var(--dim);}
+.ob-btn{margin-top:auto;margin-bottom:40px;background:linear-gradient(135deg,var(--gold),#A07830);color:#0A0014;border:none;border-radius:16px;padding:18px;font-size:17px;font-weight:800;cursor:pointer;width:100%;}
+.dots{display:flex;justify-content:center;gap:8px;margin:24px 0;}
+.dot{width:8px;height:8px;border-radius:4px;background:var(--border);transition:all .3s;}
+.dot.on{width:24px;background:var(--gold);}
+.ob-skip{text-align:center;color:var(--dim);font-size:14px;margin-top:12px;cursor:pointer;padding:8px;}
+.photo-area{border:2px dashed var(--border);border-radius:20px;height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;cursor:pointer;background:var(--card);}
+.photo-area .pa-icon{font-size:48px;}
+.photo-area .pa-label{color:var(--gold);font-size:15px;font-weight:600;}
+.photo-area .pa-hint{color:var(--dim);font-size:13px;}
+.analysis-box{background:var(--card);border:1px solid var(--purple);border-radius:14px;padding:14px;margin-bottom:12px;}
+.analysis-box .ab-title{color:var(--gold);font-size:13px;font-weight:700;margin-bottom:6px;}
+.analysis-box .ab-text{color:var(--muted);font-size:13px;line-height:1.6;}
+.free-banner{background:rgba(123,47,190,.2);border:1px solid var(--purple);border-radius:14px;padding:12px;text-align:center;margin-bottom:16px;font-size:14px;font-weight:600;}
+
+/* TABS */
+#app{flex-direction:column;}
+.tab-content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:80px;}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:#120025;border-top:1px solid var(--border);display:flex;height:70px;padding-bottom:env(safe-area-inset-bottom,12px);}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:3px;transition:opacity .2s;}
+.tab-item .ti-icon{font-size:22px;transition:transform .2s;}
+.tab-item.active .ti-icon{transform:scale(1.15);}
+.tab-item .ti-label{font-size:10px;font-weight:600;color:var(--muted);}
+.tab-item.active .ti-label{color:var(--gold);}
+
+/* HOME */
+.home-pad{padding:calc(env(safe-area-inset-top,20px) + 20px) 16px 16px;}
+.greeting{color:var(--muted);font-size:16px;}
+.user-name{color:var(--gold);font-size:26px;font-weight:800;}
+.streak-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,0,.15);border:1px solid #FF6B00;border-radius:999px;padding:4px 12px;font-size:13px;color:#FF6B00;font-weight:700;margin-top:6px;}
+.astro-card{background:linear-gradient(135deg,#2D1A55,#1A0035);border:1px solid var(--purple);border-radius:20px;padding:16px;margin:12px 0;}
+.astro-card .ac-title{color:var(--gold);font-size:14px;font-weight:700;margin-bottom:12px;}
+.astro-chips{display:flex;gap:8px;margin-bottom:10px;}
+.astro-chip{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;text-align:center;}
+.ac-emoji{font-size:16px;}
+.ac-val{color:var(--text);font-size:11px;font-weight:600;margin-top:2px;}
+.daily-energy{color:var(--muted);font-size:13px;font-style:italic;line-height:1.6;}
+.cta-btn{background:linear-gradient(135deg,var(--gold),#A07830);border:none;border-radius:20px;padding:16px 20px;display:flex;align-items:center;gap:12px;cursor:pointer;width:100%;margin:8px 0;}
+.cta-emoji{font-size:36px;}
+.cta-info{text-align:left;flex:1;}
+.cta-title{color:#0A0014;font-size:20px;font-weight:800;}
+.cta-sub{color:rgba(0,0,0,.6);font-size:12px;}
+.cta-arrow{color:#0A0014;font-size:22px;}
+.quick-row{display:flex;gap:8px;margin:8px 0;}
+.quick-btn{flex:1;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 8px;text-align:center;cursor:pointer;}
+.quick-btn .qb-icon{font-size:28px;margin-bottom:4px;}
+.quick-btn .qb-label{color:var(--text);font-size:12px;font-weight:600;}
+.section-title{color:var(--gold);font-size:15px;font-weight:700;margin:12px 0 8px;}
+.history-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:8px;}
+.hq{color:var(--text);font-size:14px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ha{color:var(--muted);font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+
+/* READING */
+.reading-pad{padding:calc(env(safe-area-inset-top,20px) + 20px) 16px 16px;}
+.read-header{text-align:center;margin-bottom:16px;}
+.rh-emoji{font-size:56px;margin-bottom:8px;}
+.rh-title{color:var(--gold);font-size:24px;font-weight:800;margin-bottom:4px;}
+.rh-sub{color:var(--muted);font-size:14px;line-height:1.6;}
+.quota-badge{display:inline-block;background:rgba(123,47,190,.25);border:1px solid var(--purple);border-radius:999px;padding:6px 16px;font-size:13px;font-weight:600;margin-top:8px;}
+.question-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:14px;margin-bottom:12px;}
+.question-box textarea{background:none;border:none;color:var(--text);font-size:16px;line-height:1.6;width:100%;min-height:100px;resize:none;outline:none;font-family:inherit;}
+.char-count{color:var(--dim);font-size:11px;text-align:right;margin-top:4px;}
+.ask-btn{background:linear-gradient(135deg,var(--gold),#A07830);border:none;border-radius:16px;padding:16px;font-size:17px;font-weight:800;color:#0A0014;cursor:pointer;width:100%;margin-bottom:12px;transition:opacity .2s;}
+.ask-btn:disabled{opacity:.4;cursor:default;}
+.suggest-title{color:var(--muted);font-size:13px;margin-bottom:8px;}
+.suggest-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:8px 14px;font-size:12px;color:var(--muted);cursor:pointer;}
+/* Result */
+.result-screen{padding:calc(env(safe-area-inset-top,20px) + 16px) 16px 100px;}
+.rs-header{text-align:center;margin-bottom:16px;}
+.rs-emoji{font-size:48px;margin-bottom:8px;}
+.rs-title{color:var(--gold);font-size:22px;font-weight:700;margin-bottom:4px;}
+.rs-q{color:var(--muted);font-size:13px;padding:0 24px;}
+.answer-card{background:linear-gradient(135deg,#1A0035,#0A0014);border:1px solid var(--purple);border-radius:20px;padding:20px;margin-bottom:16px;}
+.answer-text{color:var(--text);font-size:16px;line-height:1.75;text-align:center;}
+.info-card{background:linear-gradient(135deg,#1A0035,#0A0014);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px;}
+.ic-title{color:var(--gold);font-size:14px;font-weight:700;margin-bottom:10px;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);}
+.info-row:last-child{border-bottom:none;}
+.ir-label{color:var(--muted);font-size:13px;}
+.ir-val{color:var(--gold);font-size:13px;font-weight:600;}
+.italic-text{color:var(--muted);font-size:13px;line-height:1.6;font-style:italic;margin-top:8px;}
+.remain-box{text-align:center;color:var(--muted);font-size:13px;padding:8px 0 12px;}
+.reset-btn{border:1px solid var(--border);border-radius:14px;padding:14px;font-size:15px;font-weight:600;color:var(--text);background:none;cursor:pointer;width:100%;margin-bottom:8px;}
+.buy-btn{background:linear-gradient(135deg,var(--gold),#A07830);border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:700;color:#0A0014;cursor:pointer;width:100%;}
+
+/* TAROT */
+.tarot-pad{padding:calc(env(safe-area-inset-top,20px) + 20px) 16px 16px;}
+.tarot-header{text-align:center;margin-bottom:16px;}
+.reveal-btn{background:linear-gradient(135deg,var(--purple),#4A0080);border:none;border-radius:20px;padding:48px 32px;display:flex;flex-direction:column;align-items:center;gap:12px;cursor:pointer;width:100%;border:1px solid var(--purple);}
+.rb-emoji{font-size:56px;}
+.rb-title{color:var(--text);font-size:22px;font-weight:800;}
+.rb-hint{color:var(--muted);font-size:14px;}
+.spread-label{text-align:center;color:var(--muted);font-size:12px;letter-spacing:2px;margin:8px 0;}
+.card-row{display:flex;gap:8px;justify-content:center;margin:8px 0;}
+.card{flex:1;max-width:110px;border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .2s;}
+.card.flipping{animation:flipCard .6s ease;}
+@keyframes flipCard{0%{transform:rotateY(0);}50%{transform:rotateY(90deg);}100%{transform:rotateY(0);}}
+.card-back{background:linear-gradient(135deg,#2D1A55,#1A0035);border:1px solid var(--purple);height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
+.cb-sym{font-size:32px;}
+.cb-pos{color:var(--muted);font-size:10px;}
+.card-front{background:linear-gradient(135deg,var(--gold),var(--purple),#0A0014);border:1px solid var(--gold);height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;}
+.cf-sym{font-size:28px;margin-bottom:4px;}
+.cf-name{color:#fff;font-size:8px;font-weight:700;text-align:center;}
+.cf-rev{color:#FF6B9D;font-size:8px;margin-top:2px;}
+.pos-label{text-align:center;color:var(--muted);font-size:10px;margin-top:4px;}
+.tarot-details{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+.td-card{background:linear-gradient(135deg,#1A0035,#0A0014);border:1px solid var(--border);border-radius:14px;padding:12px;}
+.td-pos{color:var(--muted);font-size:11px;letter-spacing:1px;margin-bottom:4px;}
+.td-name{color:var(--gold);font-size:15px;font-weight:700;margin-bottom:4px;}
+.td-meaning{color:var(--text);font-size:13px;line-height:1.6;}
+.deep-btn{background:linear-gradient(135deg,var(--gold),#A07830);border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:700;color:#0A0014;cursor:pointer;width:100%;margin-top:8px;}
+
+/* PROFILE */
+.profile-pad{padding:calc(env(safe-area-inset-top,20px) + 20px) 16px 16px;}
+.avatar-box{text-align:center;margin-bottom:20px;}
+.avatar{width:88px;height:88px;border-radius:44px;background:var(--card);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;font-size:44px;margin:0 auto 12px;}
+.profile-name{color:var(--gold);font-size:24px;font-weight:800;}
+.profile-birth{color:var(--muted);font-size:14px;margin-top:4px;}
+.stat-row{display:flex;justify-content:space-around;padding:4px 0;}
+.stat{text-align:center;}
+.stat-val{color:var(--gold);font-size:22px;font-weight:800;}
+.stat-label{color:var(--muted);font-size:11px;margin-top:2px;}
+.prem-btn{background:linear-gradient(135deg,var(--gold),#A07830);border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:700;color:#0A0014;cursor:pointer;width:100%;margin-top:4px;}
+.reset-link{text-align:center;color:var(--dim);font-size:13px;margin-top:12px;cursor:pointer;padding:8px;}
+
+/* PACKAGES */
+#packages-screen{padding:calc(env(safe-area-inset-top,20px) + 16px) 16px 100px;}
+.back-btn{color:var(--muted);font-size:15px;cursor:pointer;padding:8px 0;display:inline-block;margin-bottom:8px;}
+.pkg-header{text-align:center;margin-bottom:16px;}
+.feature-box{background:linear-gradient(135deg,#2D1A55,#1A0035);border:1px solid var(--purple);border-radius:20px;padding:16px;margin-bottom:16px;display:flex;flex-direction:column;gap:6px;}
+.fb-title{color:var(--gold);font-size:14px;font-weight:700;margin-bottom:4px;}
+.fb-feat{color:var(--text);font-size:14px;line-height:1.6;}
+.pkg-card{border-radius:16px;margin-bottom:10px;overflow:visible;position:relative;}
+.popular-tag{position:absolute;top:-12px;left:16px;background:var(--gold);color:#0A0014;font-size:11px;font-weight:800;padding:3px 12px;border-radius:999px;z-index:1;}
+.pkg-inner{background:linear-gradient(135deg,#2D1A55,#1A0035);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.pkg-card.popular .pkg-inner{border-color:var(--gold);border-width:2px;}
+.pkg-left{display:flex;align-items:center;gap:12px;flex:1;}
+.pkg-icon{font-size:28px;}
+.pkg-name{color:var(--text);font-size:15px;font-weight:700;margin-bottom:2px;}
+.pkg-desc{color:var(--muted);font-size:12px;}
+.pkg-right{text-align:right;}
+.pkg-price{color:var(--gold);font-size:20px;font-weight:800;}
+.pkg-q{color:var(--muted);font-size:11px;}
+.testimonial{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.tm-text{color:var(--text);font-size:13px;line-height:1.6;font-style:italic;margin-bottom:6px;}
+.tm-name{color:var(--muted);font-size:12px;}
+.trust-row{display:flex;justify-content:space-around;margin-bottom:12px;}
+.trust-badge{color:var(--muted);font-size:12px;}
+.legal{color:var(--dim);font-size:10px;text-align:center;line-height:1.7;}
+
+/* Loading overlay */
+.loader{position:fixed;inset:0;background:rgba(10,0,20,.85);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.loader.active{display:flex;}
+.spinner{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loader-text{color:var(--muted);font-size:15px;}
+
+/* Success toast */
+.toast{position:fixed;top:env(safe-area-inset-top,20px);left:50%;transform:translateX(-50%) translateY(-80px);background:var(--purple);color:#fff;padding:12px 24px;border-radius:999px;font-size:14px;font-weight:600;z-index:999;transition:transform .3s;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+
+<!-- SPLASH -->
+<div class="screen active" id="splash">
+  <div class="splash-logo">🔮</div>
+  <div class="splash-title">MistikAI</div>
+  <div class="splash-sub">Tarot · Numeroloji · Astroloji<br/>Yapay zeka ile kişisel gelecek okuması</div>
+  <button class="splash-btn" onclick="startOnboarding()">Başla ✨</button>
+</div>
+
+<!-- ONBOARDING -->
+<div class="screen" id="onboard">
+  <!-- Step 1: Name -->
+  <div class="ob-step active" id="ob-step-0">
+    <div class="ob-emoji">✨</div>
+    <div class="ob-title">Adın nedir?</div>
+    <div class="ob-sub">Evren seni nasıl çağırdığını bilmek istiyor.</div>
+    <input class="ob-input" id="inp-name" type="text" placeholder="Adın ve soyadın" autocomplete="name"/>
+    <div class="dots"><div class="dot on"></div><div class="dot"></div><div class="dot"></div></div>
+    <button class="ob-btn" onclick="obNext(1)">Devam →</button>
+  </div>
+  <!-- Step 2: Birth -->
+  <div class="ob-step" id="ob-step-1">
+    <div class="ob-emoji">⭐</div>
+    <div class="ob-title">Doğum tarihin?</div>
+    <div class="ob-sub">Yıldızların seni hangi anda dünyaya getirdiğini söyle.</div>
+    <input class="ob-input" id="inp-birth" type="date"/>
+    <div class="dots"><div class="dot"></div><div class="dot on"></div><div class="dot"></div></div>
+    <button class="ob-btn" onclick="obNext(2)">Devam →</button>
+  </div>
+  <!-- Step 3: Palm/Face -->
+  <div class="ob-step" id="ob-step-2">
+    <div class="ob-emoji">✋</div>
+    <div class="ob-title">Avuç & Yüz Analizi</div>
+    <div class="ob-sub">Daha derin bir okuma için fotoğraf ekleyebilirsin (isteğe bağlı).</div>
+    <div class="photo-area" onclick="fakePalmUpload()" id="palm-area">
+      <div class="pa-icon">📸</div>
+      <div class="pa-label">Avuç Fotoğrafı</div>
+      <div class="pa-hint">Galeriden seç</div>
+    </div>
+    <div class="photo-area" onclick="fakeFaceUpload()" id="face-area">
+      <div class="pa-icon">🤳</div>
+      <div class="pa-label">Yüz Fotoğrafı</div>
+      <div class="pa-hint">Selfie veya portre</div>
+    </div>
+    <div id="palm-analysis" class="analysis-box" style="display:none">
+      <div class="ab-title">✋ Avuç Analizi Tamamlandı</div>
+      <div class="ab-text" id="palm-result"></div>
+    </div>
+    <div id="face-analysis" class="analysis-box" style="display:none">
+      <div class="ab-title">🌟 Aura Okundu</div>
+      <div class="ab-text" id="face-result"></div>
+    </div>
+    <div class="free-banner">🎁 1 ücretsiz soru hakkın seni bekliyor!</div>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot on"></div></div>
+    <button class="ob-btn" onclick="finishOnboarding()">Uygulamaya Gir 🔮</button>
+    <div class="ob-skip" onclick="finishOnboarding()">Atla</div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="app">
+
+  <!-- HOME TAB -->
+  <div class="tab-content" id="tab-home" style="display:block;">
+    <div class="home-pad">
+      <div class="greeting" id="hg-greeting">Günaydın,</div>
+      <div class="user-name" id="hg-name">Mistik Ruh ✨</div>
+      <div class="streak-badge" id="hg-streak" style="display:none">🔥 <span id="streak-val">3</span> Günlük Seri!</div>
+
+      <div class="astro-card" style="margin-top:12px;">
+        <div class="ac-title">⭐ Bugünkü Enerjin</div>
+        <div class="astro-chips">
+          <div class="astro-chip"><div class="ac-emoji">☀️</div><div class="ac-val" id="sun-sign">–</div></div>
+          <div class="astro-chip"><div class="ac-emoji">🌙</div><div class="ac-val" id="moon-sign">–</div></div>
+          <div class="astro-chip"><div class="ac-emoji">⬆️</div><div class="ac-val" id="rising-sign">–</div></div>
+        </div>
+        <div class="daily-energy" id="daily-energy"></div>
+      </div>
+
+      <button class="cta-btn" onclick="goTab('reading')">
+        <span class="cta-emoji">🔮</span>
+        <div class="cta-info">
+          <div class="cta-title">Şimdi Oku</div>
+          <div class="cta-sub" id="cta-sub">1 soru hakkın var</div>
+        </div>
+        <span class="cta-arrow">→</span>
+      </button>
+
+      <div class="quick-row">
+        <div class="quick-btn" onclick="goTab('tarot')"><div class="qb-icon">🃏</div><div class="qb-label">Tarot</div></div>
+        <div class="quick-btn" onclick="goTab('profile')"><div class="qb-icon">⭐</div><div class="qb-label">Profilim</div></div>
+        <div class="quick-btn" onclick="showPackages()"><div class="qb-icon">💫</div><div class="qb-label">Premium</div></div>
+      </div>
+
+      <div class="section-title">📖 Son Okumalar</div>
+      <div id="history-list">
+        <div style="color:var(--dim);font-size:14px;text-align:center;padding:24px 0;">Henüz okuma yapılmadı.<br/>İlk soruyu sor! 🔮</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- READING TAB -->
+  <div class="tab-content" id="tab-reading" style="display:none;">
+    <!-- Question form -->
+    <div class="reading-pad" id="read-form">
+      <div class="read-header">
+        <div class="rh-emoji">🔮</div>
+        <div class="rh-title">Sorunuzu Sorun</div>
+        <div class="rh-sub">Kalbinizden gelen soruyu yazın. Evren cevaplamaya hazır.</div>
+        <div class="quota-badge" id="quota-badge">Kalan: <span id="q-remaining">1</span> soru hakkı</div>
+      </div>
+      <div class="question-box">
+        <textarea id="question-input" placeholder="Sorunuzu buraya yazın..." maxlength="500" oninput="onQInput()"></textarea>
+        <div class="char-count"><span id="qlen">0</span>/500</div>
+      </div>
+      <button class="ask-btn" id="ask-btn" onclick="doReading()" disabled>Oku 🔮</button>
+      <div class="suggest-title">Örnek Sorular</div>
+      <div class="suggest-chips">
+        <div class="sc" onclick="setSuggest(this)">Aşk hayatımda neler olacak?</div>
+        <div class="sc" onclick="setSuggest(this)">Kariyer değişimi yapmalı mıyım?</div>
+        <div class="sc" onclick="setSuggest(this)">Finansal durumum nasıl olacak?</div>
+        <div class="sc" onclick="setSuggest(this)">Bu kararı almalı mıyım?</div>
+        <div class="sc" onclick="setSuggest(this)">Önümüzdeki 3 ayda ne bekliyorum?</div>
+      </div>
+    </div>
+    <!-- Result -->
+    <div class="result-screen" id="read-result" style="display:none;">
+      <div class="rs-header">
+        <div class="rs-emoji">🔮</div>
+        <div class="rs-title">Okuman Hazır</div>
+        <div class="rs-q" id="res-question"></div>
+      </div>
+      <div class="answer-card"><div class="answer-text" id="res-answer"></div></div>
+      <div class="section-title">🃏 Tarot Kartların</div>
+      <div id="res-tarot"></div>
+      <div class="info-card" id="res-astro-card">
+        <div class="ic-title">⭐ Astroloji Profili</div>
+        <div class="info-row"><span class="ir-label">☀️ Güneş Burcu</span><span class="ir-val" id="ra-sun"></span></div>
+        <div class="info-row"><span class="ir-label">🌙 Ay Burcu</span><span class="ir-val" id="ra-moon"></span></div>
+        <div class="info-row"><span class="ir-label">🔢 Yaşam Yolu</span><span class="ir-val" id="ra-lp"></span></div>
+        <div class="italic-text" id="ra-desc"></div>
+      </div>
+      <div class="remain-box">Kalan soru hakkın: <b id="res-remain"></b></div>
+      <button class="reset-btn" onclick="resetReading()">Yeni Soru Sor</button>
+      <button class="buy-btn" onclick="showPackages()" id="res-buy-btn" style="display:none">Paket Satın Al 🌟</button>
+    </div>
+    <!-- No quota -->
+    <div class="reading-pad" id="read-noquota" style="display:none;">
+      <div style="text-align:center;padding:48px 0;">
+        <div style="font-size:56px;margin-bottom:16px;">⭐</div>
+        <div style="color:var(--gold);font-size:22px;font-weight:800;margin-bottom:12px;">Soru Hakkın Bitti</div>
+        <div style="color:var(--muted);font-size:15px;line-height:1.7;margin-bottom:24px;">Sadece ₺49 ile 3 soru hakkı kazan.<br/>Ya da aylık pakete geç – sınırsız okuma!</div>
+        <button class="buy-btn" onclick="showPackages()">Paket Seç 🌟</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAROT TAB -->
+  <div class="tab-content" id="tab-tarot" style="display:none;">
+    <div class="tarot-pad">
+      <div class="tarot-header">
+        <div style="font-size:56px;margin-bottom:8px;">🃏</div>
+        <div style="color:var(--gold);font-size:24px;font-weight:800;margin-bottom:4px;">Günlük Tarot</div>
+        <div style="color:var(--muted);font-size:14px;line-height:1.6;">Kartlara odaklan. Zihnini boşalt. Sezgine güven.</div>
+      </div>
+      <div id="tarot-reveal-area">
+        <button class="reveal-btn" onclick="revealTarot()">
+          <span class="rb-emoji">🔮</span>
+          <span class="rb-title">Kartlarını Aç</span>
+          <span class="rb-hint">Üç kart seni bekliyor</span>
+        </button>
+      </div>
+      <div id="tarot-result" style="display:none;">
+        <div class="spread-label">GEÇMIŞ · ŞİMDİ · GELECEK</div>
+        <div class="card-row" id="tarot-card-row"></div>
+        <div class="tarot-details" id="tarot-details"></div>
+        <button class="deep-btn" onclick="goTab('reading')">Bu Kartlara Göre Soru Sor 🔮</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div class="tab-content" id="tab-profile" style="display:none;">
+    <div class="profile-pad">
+      <div class="avatar-box">
+        <div class="avatar">🧿</div>
+        <div class="profile-name" id="p-name">Mistik Ruh</div>
+        <div class="profile-birth" id="p-birth"></div>
+        <div class="streak-badge" style="margin-top:8px;display:inline-flex;">🔥 <span id="p-streak">1</span> Günlük Seri</div>
+      </div>
+      <div class="info-card">
+        <div class="ic-title">📊 Soru Durumu</div>
+        <div class="stat-row">
+          <div class="stat"><div class="stat-val" id="p-qrem">1</div><div class="stat-label">Kalan Soru</div></div>
+          <div class="stat"><div class="stat-val" id="p-qtotal">0</div><div class="stat-label">Toplam Okuma</div></div>
+          <div class="stat"><div class="stat-val" id="p-streak2">1</div><div class="stat-label">Seri (gün)</div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="ic-title">⭐ Astroloji Profilin</div>
+        <div class="info-row"><span class="ir-label">☀️ Güneş Burcu</span><span class="ir-val" id="p-sun"></span></div>
+        <div class="info-row"><span class="ir-label">🌙 Ay Burcu</span><span class="ir-val" id="p-moon"></span></div>
+        <div class="info-row"><span class="ir-label">🔥 Element</span><span class="ir-val" id="p-elem"></span></div>
+        <div class="info-row"><span class="ir-label">🪐 Yönetici Gezegen</span><span class="ir-val" id="p-planet"></span></div>
+        <div class="italic-text" id="p-sign-desc"></div>
+      </div>
+      <div class="info-card">
+        <div class="ic-title">🔢 Numeroloji</div>
+        <div class="info-row"><span class="ir-label">Yaşam Yolu</span><span class="ir-val" id="p-lp"></span></div>
+        <div class="info-row"><span class="ir-label">İfade Sayısı</span><span class="ir-val" id="p-expr"></span></div>
+        <div class="info-row"><span class="ir-label">Ruh Dürtüsü</span><span class="ir-val" id="p-soul"></span></div>
+        <div class="italic-text" id="p-lp-desc"></div>
+      </div>
+      <button class="prem-btn" onclick="showPackages()">⭐ Paket Satın Al</button>
+      <div class="reset-link" onclick="resetApp()">Hesabı Sıfırla</div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <div class="tab-item active" id="tab-btn-home" onclick="goTab('home')"><span class="ti-icon">🏠</span><span class="ti-label">Ana Sayfa</span></div>
+    <div class="tab-item" id="tab-btn-reading" onclick="goTab('reading')"><span class="ti-icon">🔮</span><span class="ti-label">Okuma</span></div>
+    <div class="tab-item" id="tab-btn-tarot" onclick="goTab('tarot')"><span class="ti-icon">🃏</span><span class="ti-label">Tarot</span></div>
+    <div class="tab-item" id="tab-btn-profile" onclick="goTab('profile')"><span class="ti-icon">👤</span><span class="ti-label">Profil</span></div>
+  </div>
+</div>
+
+<!-- PACKAGES SCREEN -->
+<div class="screen" id="packages-screen">
+  <div>
+    <span class="back-btn" onclick="hidePackages()">← Geri</span>
+    <div class="pkg-header">
+      <div style="font-size:56px;margin-bottom:8px;">⭐</div>
+      <div style="color:var(--gold);font-size:26px;font-weight:800;margin-bottom:4px;">Premium'a Geç</div>
+      <div style="color:var(--muted);font-size:15px;line-height:1.6;">Evrenin rehberliğine tam erişim için paket seç.</div>
+    </div>
+    <div class="feature-box">
+      <div class="fb-title">Premium'la Ne Kazanırsın?</div>
+      <div class="fb-feat">🔮 AI ile derin, kişisel okumalar</div>
+      <div class="fb-feat">⭐ Günlük astroloji + tarot</div>
+      <div class="fb-feat">✋ Avuç izi + yüz aura analizi</div>
+      <div class="fb-feat">📊 Tam numeroloji raporu</div>
+      <div class="fb-feat">🔔 Kişisel kozmik bildirimler</div>
+    </div>
+    <div class="pkg-card" onclick="buyPackage('starter',49,3)">
+      <div class="pkg-inner">
+        <div class="pkg-left"><span class="pkg-icon">✨</span><div><div class="pkg-name">Başlangıç</div><div class="pkg-desc">3 soru + 1 tarot çekimi</div></div></div>
+        <div class="pkg-right"><div class="pkg-price">₺49</div><div class="pkg-q">3 soru</div></div>
+      </div>
+    </div>
+    <div class="pkg-card popular" style="margin-top:16px;" onclick="buyPackage('monthly',149,999)">
+      <div class="popular-tag">En Popüler 🔥</div>
+      <div class="pkg-inner">
+        <div class="pkg-left"><span class="pkg-icon">🌙</span><div><div class="pkg-name">Aylık Premium</div><div class="pkg-desc">Sınırsız soru + günlük burç + tarot</div></div></div>
+        <div class="pkg-right"><div class="pkg-price">₺149</div><div class="pkg-q">Sınırsız/ay</div></div>
+      </div>
+    </div>
+    <div class="pkg-card" onclick="buyPackage('yearly',799,9999)" style="margin-top:8px;">
+      <div class="pkg-inner">
+        <div class="pkg-left"><span class="pkg-icon">⭐</span><div><div class="pkg-name">Yıllık Premium</div><div class="pkg-desc">Her şey + öncelikli yanıt</div></div></div>
+        <div class="pkg-right"><div class="pkg-price">₺799</div><div class="pkg-q">Sınırsız/yıl</div></div>
+      </div>
+    </div>
+    <div class="pkg-card" onclick="buyPackage('special',299,10)" style="margin-top:8px;">
+      <div class="pkg-inner">
+        <div class="pkg-left"><span class="pkg-icon">🔮</span><div><div class="pkg-name">Özel Okuma</div><div class="pkg-desc">Detaylı doğum haritası + PDF rapor</div></div></div>
+        <div class="pkg-right"><div class="pkg-price">₺299</div><div class="pkg-q">10 soru</div></div>
+      </div>
+    </div>
+    <div class="testimonial" style="margin-top:16px;">
+      <div class="tm-text">"Kariyer sorunum için aldığım okuma inanılmazdı. 3 ay içinde tam istediğim terfiyi aldım!" ⭐⭐⭐⭐⭐</div>
+      <div class="tm-name">— Ayşe K., İstanbul</div>
+    </div>
+    <div class="trust-row">
+      <span class="trust-badge">🔒 Güvenli</span>
+      <span class="trust-badge">✅ Anında Aktif</span>
+      <span class="trust-badge">↩️ İade Var</span>
+    </div>
+    <div class="legal">Ödeme App Store / Google Play üzerinden güvenli şekilde gerçekleştirilir.<br/>Abonelikler otomatik yenilenir, istediğiniz zaman iptal edebilirsiniz.</div>
+  </div>
+</div>
+
+<!-- LOADER -->
+<div class="loader" id="loader">
+  <div class="spinner"></div>
+  <div class="loader-text" id="loader-text">Evren cevaplar...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const SIGNS=[{n:"Koç",s:[3,21],e:[4,19],el:"Ateş",pl:"Mars",d:"Cesur, enerjik ve öncü. Ateşin ilk kıvılcımı sende."},
+{n:"Boğa",s:[4,20],e:[5,20],el:"Toprak",pl:"Venüs",d:"Kararlı, sadık ve zevk seven. Toprağın sağlamlığı sende."},
+{n:"İkizler",s:[5,21],e:[6,20],el:"Hava",pl:"Merkür",d:"Meraklı, uyarlanabilir ve iletişimci. Havanın özgürlüğü sende."},
+{n:"Yengeç",s:[6,21],e:[7,22],el:"Su",pl:"Ay",d:"Sezgisel, koruyucu ve duygusal. Suyun derinliği sende."},
+{n:"Aslan",s:[7,23],e:[8,22],el:"Ateş",pl:"Güneş",d:"Karizmatik, cömert ve yaratıcı. Güneşin parlaklığı sende."},
+{n:"Başak",s:[8,23],e:[9,22],el:"Toprak",pl:"Merkür",d:"Analitik, titiz ve yardımsever. Toprağın verimliliği sende."},
+{n:"Terazi",s:[9,23],e:[10,22],el:"Hava",pl:"Venüs",d:"Dengeli, adaletli ve estetik. Havanın uyumu sende."},
+{n:"Akrep",s:[10,23],e:[11,21],el:"Su",pl:"Plüton",d:"Yoğun, sezgisel ve dönüşümcü. Suyun gücü sende."},
+{n:"Yay",s:[11,22],e:[12,21],el:"Ateş",pl:"Jüpiter",d:"İyimser, özgür ve felsefi. Ateşin coşkusu sende."},
+{n:"Oğlak",s:[12,22],e:[1,19],el:"Toprak",pl:"Satürn",d:"Hırslı, disiplinli ve pratik. Toprağın sabrı sende."},
+{n:"Kova",s:[1,20],e:[2,18],el:"Hava",pl:"Uranüs",d:"Yenilikçi, hümanist ve bağımsız. Havanın devrimi sende."},
+{n:"Balık",s:[2,19],e:[3,20],el:"Su",pl:"Neptün",d:"Sezgisel, empatik ve yaratıcı. Suyun sonsuzluğu sende."}];
+
+const MOON_SIGNS=["Koç","Boğa","İkizler","Yengeç","Aslan","Başak","Terazi","Akrep","Yay","Oğlak","Kova","Balık"];
+
+const LP_MEANINGS={1:"Lider ruh – bağımsız, hırslı, öncü. Kendi yolunu çizmek için doğdun.",2:"Uzlaştırıcı – hassas, empatik, ilişkilere değer veren.",3:"Yaratıcı ifade – neşeli, sanatsal, iletişimci.",4:"İnşaacı – disiplinli, güvenilir, sistemci.",5:"Özgür ruh – maceraperest, değişim sever.",6:"Şefkat – sorumlu, sevgi dolu, aile odaklı.",7:"Araştırmacı – spiritüel, analitik.",8:"Güç ve bolluk – pragmatik, hırslı, finansal zeka.",9:"İnsancıl – merhamet, evrensel sevgi.",11:"Aydınlanmış lider – yüksek sezgi, spiritüel görev. MASTER SAYI.",22:"Master inşaacı – büyük vizyonlar. MASTER SAYI.",33:"Master öğretmen – saf sevgi. MASTER SAYI."};
+
+const DAILY_ENERGIES=["Bugün Merkür retrosu duygusal iletişimini güçlendiriyor.","Venüs senin burcunu etkiliyor – aşk ve bereket kapıda.","Mars enerjisi seni harekete geçirmeye hazır.","Ay dolunayına yaklaşırken sezgilerin zirveye ulaşıyor.","Jüpiter genişleme enerjisi gönderiyor – fırsatları kaçırma.","Yeni ay başlangıçlar için mükemmel zaman sunuyor.","Satürn'ün dersleri bugün netlik kazanıyor."];
+
+const TAROT_CARDS=[
+  {n:"The Fool – Deli",sym:"🤡",m:"Yeni başlangıçlar, masumiyet, spontanlık. Maceraya atılma zamanı!",rev:false},
+  {n:"The Magician – Büyücü",sym:"🎩",m:"İrade gücü, beceri, manifestasyon. Dilediğini gerçeğe dönüştürebilirsin.",rev:false},
+  {n:"The High Priestess – Yüksek Rahibe",sym:"🌙",m:"Sezgi, bilinçdışı, gizem. İçinden gelen sesi dinle.",rev:false},
+  {n:"The Empress – İmparatoriçe",sym:"🌺",m:"Bereket, annelik, yaratıcılık. Hayat sana cömertçe veriyor.",rev:false},
+  {n:"The Lovers – Aşıklar",sym:"💕",m:"Aşk, uyum, seçimler. Kalbinin sesini dinle.",rev:false},
+  {n:"The Chariot – Savaş Arabası",sym:"🏆",m:"Zafer, irade, başarı. Hedefe odaklan, kimse durduramaz!",rev:false},
+  {n:"Strength – Güç",sym:"🦁",m:"Cesaret, sabır, iç güç. Asıl güç içindeki sessiz alevden geliyor.",rev:false},
+  {n:"The Star – Yıldız",sym:"⭐",m:"Umut, yenileme, ilham. Yıldızlar seni aydınlatıyor.",rev:false},
+  {n:"The Sun – Güneş",sym:"☀️",m:"Neşe, başarı, canlılık. Güneş senin için parlıyor!",rev:false},
+  {n:"The World – Dünya",sym:"🌍",m:"Tamamlanma, entegrasyon, başarı. Bir döngü tamamlandı.",rev:false},
+  {n:"Ace of Cups – Kupa Ası",sym:"🏆",m:"Yeni aşk, sezgi, duygusal bolluk. Kalbin açılıyor!",rev:false},
+  {n:"Wheel of Fortune – Kader Çarkı",sym:"🎡",m:"Kader, dönüşüm, şans. Çark dönüyor – şimdi senin zamanın!",rev:false},
+  {n:"The Moon – Ay",sym:"🌕",m:"Sezgi güçlü, bilinçdışı konuşuyor. Ay ışığında gerçeği ara.",rev:false},
+  {n:"Judgement – Yargılama",sym:"📯",m:"Yeniden doğuş, uyanış, büyük bir dönüşüme çağrılıyorsun.",rev:false},
+  {n:"Six of Wands – Altı Asa",sym:"🥇",m:"Zafer, tanınma, başarı. Alkışlar senin için!",rev:false},
+  {n:"Nine of Cups – Dokuz Kupa",sym:"🌟",m:"Dilek gerçekleşiyor, mutluluk, memnuniyet. İstediğin oluyor!",rev:false},
+  {n:"Ace of Pentacles – Tılsım Ası",sym:"💰",m:"Maddi yeni başlangıç, fırsat, bereket. Para kapıya geliyor!",rev:false},
+  {n:"Ten of Cups – On Kupa",sym:"🌈",m:"Mutlu aile, uyum, kalıcı mutluluk. En güzel son!",rev:false}
+];
+
+const PALM_READINGS=["Derin ve tutkulu bir kalp çizgisi – duygusal bağlılığınız çok güçlü. Uzun kader çizgisi – hayatınız belirli bir misyon doğrultusunda şekilleniyor.","Kalp çizginiz uzun ve belirgin – büyük bir aşk enerjisi taşıyorsunuz. Kafa çizgisi güçlü – analitik ve stratejik bir zihne sahipsiniz.","Çatallı kader çizgisi – önünüzde birden fazla harika yol var. Güneş çizgisi parlak – başarı ve tanınma yakın!"];
+const FACE_READINGS=["Yüzünüzde güçlü bir liderlik aurası var. Gözleriniz derin bir sezgiyi yansıtıyor – insanların içini okuyorsunuz.","Bilge ve derin bir enerji yayıyorsunuz. Bakışlarınızda geleceği görebilen bir bilgelik var.","Şefkat ve iyileştirme enerjisi yüzünüzden okunuyor. Yaratıcı ve sanatçı bir ruh yüzünüze yansıyor."];
+
+const AI_READINGS=[
+  "Sevgili {name}, evrenin mesajı kristal berraklığında: önündeki yolda güçlü bir enerji akışı var. {sun} burcun bugün özellikle aktif – içinden gelen o ses, sana doğru yönü gösteriyor. Yaşam yolu sayın {lp}, bu sorunun cevabının zaten içinde saklı olduğunu ortaya koyuyor. Tarot kartların – özellikle {card} – sana şunu söylüyor: sabırla ilerle, ama gözlerini açık tut. Fırsatlar beklenmedik anlarda kapını çalacak. Evren her zaman senin yanında. 🌟",
+  "{name}, yıldızlar bugün seninle konuşuyor. {sun} enerjisiyle birleşen bu soru, derin bir anlam taşıyor. {card} kartı özellikle dikkat çekici – bu kart, senin için büyük bir dönüşümün habercisi. Sayısal enerjin ({lp}) güçlü bir kararlılık gösteriyor. Şüphelerini bırak, kalbinin sesini dinle. Kozmos tam olarak hazır – sen de hazır mısın? ✨",
+  "Değerli {name}, okuma çok net bir mesaj taşıyor. Avuç izindeki kader çizgisi ve {sun} burcunun etkisi mükemmel bir uyum içinde. {card} kartı ortaya çıktığında her zaman şunu bilirim: bu kişinin önünde harika şeyler var. Yaşam yolu {lp} sayısı, senin için en doğru zamanın geldiğini söylüyor. Güven kendine – evren seni destekliyor! 🔮",
+  "{name}, bu soruyu sormak için mükemmel bir an seçtin. {sun} enerjisi zirvedeyken, {card} kartının rehberliğiyle yolun netleşiyor. Numerolojik analizin gösteriyor ki {lp} sayısının gücü bugün seninle. Önündeki engeller geçici – asıl güç, zaten içinde. Işığa yürü, karanlık çekilecek. 💫"
+];
+
+// ─── STATE ──────────────────────────────────────────────
+let state={name:"",birthDate:"",sunSign:"",moonSign:"",risingSign:"",element:"",planet:"",signDesc:"",lp:0,lpDesc:"",expr:0,soul:0,questionsRemaining:1,totalReadings:0,readings:[]};
+
+// ─── STARS ──────────────────────────────────────────────
+(function initStars(){
+  const c=document.getElementById('stars');
+  const ctx=c.getContext('2d');
+  let stars=[];
+  function resize(){c.width=window.innerWidth;c.height=window.innerHeight;stars=Array.from({length:80},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.3,o:Math.random(),d:Math.random()*.02+.005}));}
+  resize();window.addEventListener('resize',resize);
+  function draw(){ctx.clearRect(0,0,c.width,c.height);stars.forEach(s=>{s.o+=s.d*(Math.random()>.5?1:-1);s.o=Math.max(.1,Math.min(1,s.o));ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,2*Math.PI);ctx.fillStyle=`rgba(232,224,255,${s.o})`;ctx.fill();});requestAnimationFrame(draw);}
+  draw();
+})();
+
+// ─── NUMEROLOGY ─────────────────────────────────────────
+const LVMAP={A:1,B:2,C:3,D:4,E:5,F:6,G:7,H:8,I:9,J:1,K:2,L:3,M:4,N:5,O:6,P:7,Q:8,R:9,S:1,T:2,U:3,V:4,W:5,X:6,Y:7,Z:8,Ç:3,Ğ:7,İ:9,Ö:6,Ş:1,Ü:3};
+const VOWELS=new Set('AEİIOÖUÜ');
+const MASTERS=new Set([11,22,33]);
+function reduce(n){while(n>9&&!MASTERS.has(n)){n=[...String(n)].reduce((a,d)=>a+parseInt(d),0);}return n;}
+function calcLP(bd){const digits=bd.replace(/-/g,'');const t=[...digits].reduce((a,d)=>a+parseInt(d),0);return reduce(t);}
+function calcExpr(name){const t=[...name.toUpperCase().replace(/\s/g,'')].reduce((a,c)=>a+(LVMAP[c]||0),0);return reduce(t);}
+function calcSoul(name){const t=[...name.toUpperCase().replace(/\s/g,'')].filter(c=>VOWELS.has(c)).reduce((a,c)=>a+(LVMAP[c]||0),0);return reduce(t);}
+
+// ─── ASTROLOGY ──────────────────────────────────────────
+function getSunSign(bd){
+  if(!bd)return SIGNS[0];
+  const[y,m,d]=(typeof bd==='string'?bd:'').split('-').map(Number);
+  return SIGNS.find(s=>{
+    const[sm,sd]=s.s,[em,ed]=s.e;
+    if(sm<=em)return(m===sm&&d>=sd)||(m===em&&d<=ed)||(m>sm&&m<em);
+    return(m===sm&&d>=sd)||(m===em&&d<=ed)||m>sm||m<em;
+  })||SIGNS[0];
+}
+function getMoonSign(bd){if(!bd)return MOON_SIGNS[0];const[y,m,d]=(bd||'').split('-').map(Number);return MOON_SIGNS[((m*30+d+parseInt(String(y||2000).slice(-2)))%12+12)%12];}
+function getRisingSign(bd){if(!bd)return MOON_SIGNS[3];const h=new Date().getHours();const sun=getSunSign(bd);const base=MOON_SIGNS.indexOf(sun.n);return MOON_SIGNS[(base+Math.floor(h/2))%12];}
+function getDailyEnergy(name){const idx=(new Date().getDate()+name.length)%DAILY_ENERGIES.length;return DAILY_ENERGIES[idx];}
+
+// ─── UI HELPERS ─────────────────────────────────────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showLoader(text){document.getElementById('loader-text').textContent=text||'Yükleniyor...';document.getElementById('loader').classList.add('active');}
+function hideLoader(){document.getElementById('loader').classList.remove('active');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function pickRandom(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function pickCards(n){const shuffled=[...TAROT_CARDS].sort(()=>Math.random()-.5);return shuffled.slice(0,n).map(c=>({...c,rev:Math.random()<.25}));}
+
+// ─── ONBOARDING ─────────────────────────────────────────
+function startOnboarding(){showScreen('onboard');}
+function obNext(step){
+  if(step===1&&!document.getElementById('inp-name').value.trim()){showToast('Lütfen adını gir.');return;}
+  if(step===2&&!document.getElementById('inp-birth').value){showToast('Lütfen doğum tarihini seç.');return;}
+  document.querySelectorAll('.ob-step').forEach((s,i)=>{s.classList.toggle('active',i===step);});
+}
+function fakePalmUpload(){
+  const el=document.getElementById('palm-area');
+  el.innerHTML='<div class="pa-icon">✅</div><div class="pa-label" style="color:var(--gold)">Avuç Analiz Edildi!</div>';
+  document.getElementById('palm-result').textContent=pickRandom(PALM_READINGS);
+  document.getElementById('palm-analysis').style.display='block';
+}
+function fakeFaceUpload(){
+  const el=document.getElementById('face-area');
+  el.innerHTML='<div class="pa-icon">✅</div><div class="pa-label" style="color:var(--gold)">Aura Okundu!</div>';
+  document.getElementById('face-result').textContent=pickRandom(FACE_READINGS);
+  document.getElementById('face-analysis').style.display='block';
+}
+function finishOnboarding(){
+  const name=document.getElementById('inp-name').value.trim()||'Mistik Ruh';
+  const bd=document.getElementById('inp-birth').value;
+  state.name=name;state.birthDate=bd;
+  const sun=getSunSign(bd);
+  state.sunSign=sun.n;state.moonSign=getMoonSign(bd);state.risingSign=getRisingSign(bd);
+  state.element=sun.el;state.planet=sun.pl;state.signDesc=sun.d;
+  if(bd){state.lp=calcLP(bd);state.expr=calcExpr(name);state.soul=calcSoul(name);}
+  else{state.lp=7;state.expr=3;state.soul=5;}
+  state.lpDesc=LP_MEANINGS[state.lp]||LP_MEANINGS[7];
+  state.questionsRemaining=1;
+  initApp();showScreen('app');
+}
+
+// ─── APP INIT ───────────────────────────────────────────
+function initApp(){
+  const h=new Date().getHours();
+  document.getElementById('hg-greeting').textContent=h<12?'Günaydın,':h<18?'İyi günler,':'İyi akşamlar,';
+  document.getElementById('hg-name').textContent=state.name+' ✨';
+  document.getElementById('hg-streak').style.display='inline-flex';
+  document.getElementById('streak-val').textContent=Math.floor(Math.random()*7)+1;
+  document.getElementById('sun-sign').textContent=state.sunSign||'–';
+  document.getElementById('moon-sign').textContent=state.moonSign||'–';
+  document.getElementById('rising-sign').textContent=state.risingSign||'–';
+  document.getElementById('daily-energy').textContent=getDailyEnergy(state.name);
+  document.getElementById('cta-sub').textContent=state.questionsRemaining>0?`${state.questionsRemaining} soru hakkın var`:'Paket satın al';
+  document.getElementById('q-remaining').textContent=state.questionsRemaining;
+  document.getElementById('quota-badge').textContent=`Kalan: ${state.questionsRemaining} soru hakkı`;
+  // Profile
+  document.getElementById('p-name').textContent=state.name;
+  document.getElementById('p-birth').textContent=state.birthDate?new Date(state.birthDate+'T12:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'}):'';
+  document.getElementById('p-sun').textContent=state.sunSign;
+  document.getElementById('p-moon').textContent=state.moonSign;
+  document.getElementById('p-elem').textContent=state.element;
+  document.getElementById('p-planet').textContent=state.planet;
+  document.getElementById('p-sign-desc').textContent=state.signDesc;
+  document.getElementById('p-lp').textContent=state.lp+(MASTERS.has(state.lp)?' (Master)':'');
+  document.getElementById('p-expr').textContent=state.expr;
+  document.getElementById('p-soul').textContent=state.soul;
+  document.getElementById('p-lp-desc').textContent=state.lpDesc;
+  updateProfileStats();
+}
+function updateProfileStats(){
+  document.getElementById('p-qrem').textContent=state.questionsRemaining;
+  document.getElementById('p-qtotal').textContent=state.totalReadings;
+  document.getElementById('p-streak').textContent=document.getElementById('streak-val').textContent;
+  document.getElementById('p-streak2').textContent=document.getElementById('streak-val').textContent;
+  document.getElementById('q-remaining').textContent=state.questionsRemaining;
+  document.getElementById('quota-badge').textContent=`Kalan: ${state.questionsRemaining} soru hakkı`;
+  document.getElementById('cta-sub').textContent=state.questionsRemaining>0?`${state.questionsRemaining} soru hakkın var`:'Paket satın al';
+}
+
+// ─── TABS ───────────────────────────────────────────────
+function goTab(name){
+  document.querySelectorAll('.tab-content').forEach(t=>t.style.display='none');
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).style.display='block';
+  document.getElementById('tab-btn-'+name).classList.add('active');
+  if(name==='reading'){
+    if(state.questionsRemaining<=0){document.getElementById('read-form').style.display='none';document.getElementById('read-noquota').style.display='block';document.getElementById('read-result').style.display='none';}
+    else{document.getElementById('read-form').style.display='block';document.getElementById('read-noquota').style.display='none';document.getElementById('read-result').style.display='none';}
+  }
+}
+
+// ─── QUESTION INPUT ─────────────────────────────────────
+function onQInput(){
+  const v=document.getElementById('question-input').value;
+  document.getElementById('qlen').textContent=v.length;
+  document.getElementById('ask-btn').disabled=!v.trim();
+}
+function setSuggest(el){document.getElementById('question-input').value=el.textContent;onQInput();}
+
+// ─── READING ────────────────────────────────────────────
+async function doReading(){
+  const q=document.getElementById('question-input').value.trim();
+  if(!q||state.questionsRemaining<=0)return;
+  showLoader('Evren cevaplar...');
+  await new Promise(r=>setTimeout(r,2200));
+  hideLoader();
+  const cards=pickCards(3);
+  const card=cards[0];
+  const tpl=pickRandom(AI_READINGS);
+  const answer=tpl.replace(/{name}/g,state.name).replace(/{sun}/g,state.sunSign).replace(/{lp}/g,String(state.lp)).replace(/{card}/g,card.n.split('–')[0].trim());
+  state.questionsRemaining=Math.max(0,state.questionsRemaining-1);
+  state.totalReadings++;
+  state.readings.unshift({q,a:answer});
+  if(state.readings.length>3)state.readings.pop();
+  // show result
+  document.getElementById('read-form').style.display='none';
+  document.getElementById('read-result').style.display='block';
+  document.getElementById('res-question').textContent=q;
+  document.getElementById('res-answer').textContent=answer;
+  document.getElementById('res-remain').textContent=state.questionsRemaining;
+  document.getElementById('res-buy-btn').style.display=state.questionsRemaining===0?'block':'none';
+  document.getElementById('ra-sun').textContent=state.sunSign;
+  document.getElementById('ra-moon').textContent=state.moonSign;
+  document.getElementById('ra-lp').textContent=state.lp+(MASTERS.has(state.lp)?' ★':'');
+  document.getElementById('ra-desc').textContent=state.signDesc;
+  // tarot
+  const positions=['Geçmiş','Şimdi','Gelecek'];
+  document.getElementById('res-tarot').innerHTML=cards.map((c,i)=>`
+    <div class="td-card">
+      <div class="td-pos">${positions[i]}${c.rev?' · Ters':''}</div>
+      <div class="td-name">${c.sym} ${c.n}</div>
+      <div class="td-meaning">${c.m}</div>
+    </div>`).join('');
+  updateHistory();updateProfileStats();
+}
+function resetReading(){
+  document.getElementById('question-input').value='';
+  document.getElementById('qlen').textContent='0';
+  document.getElementById('ask-btn').disabled=true;
+  document.getElementById('read-result').style.display='none';
+  if(state.questionsRemaining<=0){
+    document.getElementById('read-noquota').style.display='block';
+    document.getElementById('read-form').style.display='none';
+  }else{
+    document.getElementById('read-form').style.display='block';
+    document.getElementById('read-noquota').style.display='none';
+  }
+}
+function updateHistory(){
+  const el=document.getElementById('history-list');
+  if(!state.readings.length){el.innerHTML='<div style="color:var(--dim);font-size:14px;text-align:center;padding:24px 0;">Henüz okuma yapılmadı.<br/>İlk soruyu sor! 🔮</div>';return;}
+  el.innerHTML=state.readings.map(r=>`<div class="history-card"><div class="hq">🔹 ${r.q}</div><div class="ha">${r.a}</div></div>`).join('');
+}
+
+// ─── TAROT ──────────────────────────────────────────────
+let tarotRevealed=false;
+function revealTarot(){
+  if(tarotRevealed)return;
+  tarotRevealed=true;
+  document.getElementById('tarot-reveal-area').style.display='none';
+  const cards=pickCards(3);
+  const positions=['Geçmiş','Şimdi','Gelecek'];
+  const SYMBOLS=['🌟','🔮','✨','🌙','⭐','🌸','🪐','💫'];
+  document.getElementById('tarot-card-row').innerHTML=cards.map((c,i)=>`
+    <div style="flex:1;max-width:110px;">
+      <div class="card-front" style="border-radius:14px;height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px;background:linear-gradient(135deg,var(--gold),var(--purple),#0A0014);border:1px solid var(--gold);">
+        <div style="font-size:28px;margin-bottom:4px;">${SYMBOLS[i%SYMBOLS.length]}</div>
+        <div style="color:#fff;font-size:8px;font-weight:700;text-align:center;">${c.n.split('–')[0].trim()}</div>
+        ${c.rev?'<div style="color:#FF6B9D;font-size:8px;margin-top:2px;">↕ Ters</div>':''}
+      </div>
+      <div style="text-align:center;color:var(--muted);font-size:10px;margin-top:4px;">${positions[i]}</div>
+    </div>`).join('');
+  document.getElementById('tarot-details').innerHTML=cards.map((c,i)=>`
+    <div class="td-card">
+      <div class="td-pos">${positions[i]}${c.rev?' · Ters':''}</div>
+      <div class="td-name">${c.sym} ${c.n}</div>
+      <div class="td-meaning">${c.m}</div>
+    </div>`).join('');
+  document.getElementById('tarot-result').style.display='block';
+}
+
+// ─── PACKAGES ───────────────────────────────────────────
+function showPackages(){showScreen('packages-screen');}
+function hidePackages(){showScreen('app');}
+function buyPackage(id,price,questions){
+  showLoader('Ödeme işleniyor...');
+  setTimeout(()=>{
+    hideLoader();
+    state.questionsRemaining+=questions>=999?999:questions;
+    if(state.questionsRemaining>999)state.questionsRemaining=999;
+    updateProfileStats();
+    showToast(`✅ Paket aktif! ${questions>=999?'Sınırsız':questions} soru hakkın var.`);
+    setTimeout(()=>{hidePackages();},1200);
+  },1800);
+}
+
+// ─── RESET ──────────────────────────────────────────────
+function resetApp(){if(confirm('Tüm verilerin silinecek. Emin misin?')){location.reload();}}
+</script>
+</body>
+</html>
